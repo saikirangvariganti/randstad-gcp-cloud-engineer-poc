@@ -1,0 +1,13 @@
+apiVersion: v2
+name: app-chart
+description: Helm chart for Randstad GCP Cloud Engineer POC application
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - gcp
+  - kubernetes
+  - cloud-engineering
+maintainers:
+  - name: Sai Kiran Goud Variganti
+    email: kiransaivarisai@gmail.com

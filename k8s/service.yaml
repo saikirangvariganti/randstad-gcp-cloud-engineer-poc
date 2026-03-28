@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: randstad-gcp-app
+  namespace: default
+  labels:
+    app: randstad-gcp-app
+  annotations:
+    cloud.google.com/backend-config: '{"default": "randstad-backend-config"}'
+spec:
+  selector:
+    app: randstad-gcp-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

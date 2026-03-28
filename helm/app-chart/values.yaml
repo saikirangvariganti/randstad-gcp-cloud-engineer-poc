@@ -1,0 +1,97 @@
+replicaCount: 3
+
+image:
+  repository: europe-west2-docker.pkg.dev/PROJECT_ID/randstad-repo/randstad-gcp-app
+  pullPolicy: Always
+  tag: "latest"
+
+serviceAccount:
+  create: false
+  name: app-sa
+  annotations:
+    iam.gke.io/gcp-service-account: app-sa@PROJECT_ID.iam.gserviceaccount.com
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: gce
+  annotations:
+    kubernetes.io/ingress.class: gce
+    kubernetes.io/ingress.allow-http: "false"
+  hosts:
+    - host: app.randstad-gcp-poc.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: randstad-gcp-tls
+      hosts:
+        - app.randstad-gcp-poc.example.com
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+env:
+  APP_ENV: production
+  LOG_LEVEL: info
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - randstad-gcp-app
+          topologyKey: kubernetes.io/hostname
